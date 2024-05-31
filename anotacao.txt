@@ -1,0 +1,147 @@
+using MySql.Data.MySqlClient;
+using System;
+
+namespace csharpMysql.query
+{
+    public class Query
+    {
+        private MySqlConnection connection;
+
+        public Query(MySqlConnection connection)
+        {
+            this.connection = connection;
+        }
+
+        public void Buscar()
+        {
+            string query = "Select * From "; 
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                MySqlDataReader reader = command.ExecuteReader();
+                Console.WriteLine("--------------------------  Registrados -------------------------------");
+                if (reader.HasRows)
+                {
+                    Console.WriteLine("pk_ | Descricao     | Permissão");
+                    Console.WriteLine(new string('-', 80));
+                    while (reader.Read())
+                    {
+                        
+                        Console.WriteLine($"{reader.GetInt32("pk_"),-8} | {reader.GetString("descricao"),-13} | {reader.GetString("permissoes"),-10}");
+                    }
+                }
+                Console.WriteLine(new string('-', 77));
+
+                reader.Close();
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine("Erro ao executar a consulta: " + ex.Message);
+            }
+        }
+        public void BuscarId(int id)
+        {
+            string query = $"select * from  where pk_ = {id}";
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                MySqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+
+                    Console.WriteLine("---------------- Busca por Id ----------------");
+                    for (var i = 0; i < reader.FieldCount; i++)
+                    {
+                        if (reader.GetName(i) == "status")
+                        {
+                            string Ativado = reader.GetInt32(i) == 1 ? "ativo" : "Desativado";
+                            Console.WriteLine($"{reader.GetName(i)}: {Ativado}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"{reader.GetName(i)}: {reader[i]}");
+                        }
+                    }
+                    Console.WriteLine("----------------------------------------------");
+                }
+                reader.Close();
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine("Erro ao executar a consulta: " + ex.Message);
+            }
+        }
+
+        public void Inserir(string descricao, string permissoes)
+        {
+            string query = "INSERT INTO  (descricao, permissoes) values (@descricao, @permissoes)";
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.Parameters.AddWithValue("@descricao", descricao);
+                command.Parameters.AddWithValue("@permissoes", permissoes);
+
+                int result = command.ExecuteNonQuery();
+                Console.WriteLine($"{result} resgistros inseridos com sucesso!");
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine("Erro ao inserir dados" + ex.Message);
+            }
+        }
+        public void Editar(int pk_, string descricao, string permissoes)
+        {
+            string query = $"UPDATE  set descricao = @descricao, permissoes = @permissoes where pk_ = @pk_";
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.Parameters.AddWithValue("@descricao", descricao);
+                command.Parameters.AddWithValue("@permissoes", permissoes);
+                command.Parameters.AddWithValue("@pk_", pk_);
+
+                int result = command.ExecuteNonQuery();
+                Console.WriteLine($"{result} resgistros Editados com sucesso!");
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine("Erro ao inserir dados" + ex.Message);
+            }
+        }
+        public void Apagar(int pk_)
+        {
+            string query = "DELETE FROM  WHERE pk_ = @pk_";
+            try
+            {
+                MySqlCommand command = new MySqlCommand(query, connection);
+                command.Parameters.AddWithValue("@pk_", pk_);
+
+                int result = command.ExecuteNonQuery();
+                Console.WriteLine($"{result} resgistro Apagado com sucesso!");
+            }
+            catch (MySqlException ex)
+            {
+                Console.WriteLine("Erro ao inserir dados" + ex.Message);
+            }
+        }
+    }
+}
+
+service
+
+
+using csharpMysql.query;
+
+namespace csharpMysql.service{
+    public class CargosService{
+        private CargosQuery cargosQuery;
+
+        public CargosService(CargosQuery cargosQuery){
+            this.cargosQuery = cargosQuery;
+        }
+
+        public void AddCargo(int status, string descricao, double salario, string funcao)
+        {
+            cargosQuery.InserirCargos(status, descricao, salario, funcao);
+        }
+    }
+}
